@@ -1,0 +1,7 @@
+20160826 10:38:32 | INFO | se.sigma.sensation.gateway.sdk.client.core.LogHandler | updateLogLevel | Loglevel set to INFO
+20160826 10:38:32 | INFO | se.sigma.sensation.gateway.sdk.client.core.LogHandler | init | Logging setup done.
+20160826 10:38:32 | INFO | se.sigma.sensation.gateway.sdk.client.SensationClient | init | Sensor collection registry initialising.
+20160826 10:38:32 | INFO | se.sigma.sensation.gateway.sdk.client.SensationClient | init | Sensor collection registry initialised.
+20160826 10:38:32 | INFO | se.sigma.sensation.gateway.sdk.client.SensationClient | init | Initialising platform...
+20160826 10:38:32 | INFO | se.sigma.sensation.gateway.sdk.client.SensationClient | init | Platform initialised.
+20160826 10:38:32 | INFO | se.sigma.sensation.gateway.sdk.client.SensationClient | start | Sensation client not yet registered.

@@ -1,4 +1,4 @@
-package com.ericsson.appiot.lwm2m.client.demo.SimpleLwm2mClient;
+package com.ericsson.appiot.simplelwm2mclient.lwm2m;
 
 import static org.eclipse.leshan.LwM2mId.DEVICE;
 import static org.eclipse.leshan.LwM2mId.LOCATION;
@@ -19,21 +19,31 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.eclipse.leshan.ResponseCode;
 import org.eclipse.leshan.client.californium.LeshanClient;
 import org.eclipse.leshan.client.californium.LeshanClientBuilder;
 import org.eclipse.leshan.client.object.Server;
+import org.eclipse.leshan.client.observer.LwM2mClientObserver;
 import org.eclipse.leshan.client.resource.LwM2mObjectEnabler;
 import org.eclipse.leshan.client.resource.ObjectsInitializer;
+import org.eclipse.leshan.client.resource.ResourceChangedListener;
+import org.eclipse.leshan.client.servers.DmServerInfo;
+import org.eclipse.leshan.client.servers.ServerInfo;
 import org.eclipse.leshan.core.request.BindingMode;
 import org.eclipse.leshan.util.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.ericsson.appiot.simplelwm2mclient.appiot.AppIoTGateway;
 
 
 public class App 
 {
     private static final Logger LOG = LoggerFactory.getLogger(App.class);
 
+    
+    private static AppIoTGateway gateway;
+    
     private final static String DEFAULT_ENDPOINT = "LeshanClientDemo";
     private final static MyLocation locationInstance = new MyLocation();
     private final static MyTelemetryEndpoint telemetryEndpiontInstance = new MyTelemetryEndpoint();
@@ -170,11 +180,8 @@ public class App
                 initializer.setInstancesForObject(SERVER, new Server(123, 30, BindingMode.U, false));
             }
         }
-        //initializer.setClassForObject(DEVICE, MyDevice.class);
-        //initializer.setClassForObject(DEVICE, MyDevice2.class);
         
         initializer.setInstancesForObject(DEVICE, new MyDevice());
-        
         initializer.setInstancesForObject(LOCATION, locationInstance);
         initializer.setInstancesForObject(10000, telemetryEndpiontInstance);
         List<LwM2mObjectEnabler> enablers = initializer.create(SECURITY, SERVER, DEVICE, LOCATION, 10000);
@@ -187,7 +194,18 @@ public class App
         builder.setLocalSecureAddress(secureLocalAddress, secureLocalPort);
         builder.setObjects(enablers);
         final LeshanClient client = builder.build();
-
+        
+        telemetryEndpiontInstance.addResourceChangedListener(new ResourceChangedListener() {			
+			public void resourcesChanged(int... resourceIds) {
+				for(int ressourceId : resourceIds) {
+					if(ressourceId == 10001) {
+						String registrationTicket = telemetryEndpiontInstance.getUrl();
+						gateway = new AppIoTGateway(registrationTicket);
+						gateway.start();
+					}					
+				}				
+			}
+		});
         
         
         LOG.info("Press 'w','a','s','d' to change reported Location.");

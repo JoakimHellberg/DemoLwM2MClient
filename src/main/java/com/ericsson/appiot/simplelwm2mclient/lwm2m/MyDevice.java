@@ -1,4 +1,4 @@
-package com.ericsson.appiot.lwm2m.client.demo.SimpleLwm2mClient;
+package com.ericsson.appiot.simplelwm2mclient.lwm2m;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;

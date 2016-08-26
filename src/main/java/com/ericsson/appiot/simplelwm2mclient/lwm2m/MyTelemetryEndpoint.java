@@ -1,4 +1,4 @@
-package com.ericsson.appiot.lwm2m.client.demo.SimpleLwm2mClient;
+package com.ericsson.appiot.simplelwm2mclient.lwm2m;
 
 import org.eclipse.leshan.client.resource.BaseInstanceEnabler;
 import org.eclipse.leshan.core.node.LwM2mResource;
@@ -14,6 +14,7 @@ public class MyTelemetryEndpoint extends BaseInstanceEnabler {
     
     private String url = "tjoffa";
     private String sas = "123";
+    
     
 
     private static final String SUPPORTED_PROTOCOLS = "HTTPS,AMQPS";
@@ -64,11 +65,11 @@ public class MyTelemetryEndpoint extends BaseInstanceEnabler {
 
     
     
-    private String getUrl() {
+    public String getUrl() {
         return url;
     }
 
-    private void setUrl(String url) {
+    public void setUrl(String url) {
     	this.url = url;
     }
     
