@@ -12,7 +12,7 @@ public class MyTelemetryEndpoint extends BaseInstanceEnabler {
 
     private static final Logger LOG = LoggerFactory.getLogger(MyTelemetryEndpoint.class);
     
-    private String url = "tjoffa";
+    private String url = "192.168.1.180:9092";
     private String sas = "123";
     
     
@@ -20,7 +20,7 @@ public class MyTelemetryEndpoint extends BaseInstanceEnabler {
     private static final String SUPPORTED_PROTOCOLS = "HTTPS,AMQPS";
     
     public MyTelemetryEndpoint() {
-
+    	fireResourcesChange(10001);
     }
 
     @Override

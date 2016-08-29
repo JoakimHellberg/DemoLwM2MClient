@@ -19,214 +19,233 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.eclipse.leshan.ResponseCode;
 import org.eclipse.leshan.client.californium.LeshanClient;
 import org.eclipse.leshan.client.californium.LeshanClientBuilder;
 import org.eclipse.leshan.client.object.Server;
-import org.eclipse.leshan.client.observer.LwM2mClientObserver;
 import org.eclipse.leshan.client.resource.LwM2mObjectEnabler;
 import org.eclipse.leshan.client.resource.ObjectsInitializer;
 import org.eclipse.leshan.client.resource.ResourceChangedListener;
-import org.eclipse.leshan.client.servers.DmServerInfo;
-import org.eclipse.leshan.client.servers.ServerInfo;
 import org.eclipse.leshan.core.request.BindingMode;
 import org.eclipse.leshan.util.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ericsson.appiot.simplelwm2mclient.appiot.AppIoTGateway;
+import com.appiot.examples.simulated.platform.SimulatedPlatformListener;
+import com.appiot.examples.simulated.platform.SimulatedPlatformManager;
+import com.appiot.examples.simulated.platform.device.SensorData;
+import com.appiot.examples.simulated.platform.device.SimulatedDevice;
 
+public class App {
+	private static final Logger LOG = LoggerFactory.getLogger(App.class);
 
-public class App 
-{
-    private static final Logger LOG = LoggerFactory.getLogger(App.class);
+	public final static String ENDPOINT = "4EDBC968-244E-4997-BF51-81EE04726037";
+	private final static MyLocation locationInstance = new MyLocation();
+	private final static MyTelemetryEndpoint telemetryEndpiontInstance = new MyTelemetryEndpoint();
+	private final static MyTemperature temperatureInstance = new MyTemperature();
+	private final static String USAGE = "java -jar leshan-client-demo.jar [OPTION]";
 
-    
-    private static AppIoTGateway gateway;
-    
-    private final static String DEFAULT_ENDPOINT = "LeshanClientDemo";
-    private final static MyLocation locationInstance = new MyLocation();
-    private final static MyTelemetryEndpoint telemetryEndpiontInstance = new MyTelemetryEndpoint();
-    private final static String USAGE = "java -jar leshan-client-demo.jar [OPTION]";
+	private final static SimulatedPlatformManager manager = new SimulatedPlatformManager();
 
-    public static void main(final String[] args) {
+	public static void main(final String[] args) {
 
-        // Define options for command line tools
-        Options options = new Options();
+		// Define options for command line tools
+		Options options = new Options();
 
-        options.addOption("h", "help", false, "Display help information.");
-        options.addOption("n", true, String.format(
-                "Set the endpoint name of the Client.\nDefault: the local hostname or '%s' if any.", DEFAULT_ENDPOINT));
-        options.addOption("b", false, "If present use bootstrap.");
-        options.addOption("lh", true, "Set the local CoAP address of the Client.\n  Default: any local address.");
-        options.addOption("lp", true,
-                "Set the local CoAP port of the Client.\n  Default: A valid port value is between 0 and 65535.");
-        options.addOption("slh", true, "Set the secure local CoAP address of the Client.\nDefault: any local address.");
-        options.addOption("slp", true,
-                "Set the secure local CoAP port of the Client.\nDefault: A valid port value is between 0 and 65535.");
-        options.addOption("u", true, "Set the LWM2M or Bootstrap server URL.\nDefault: localhost:5683.");
-        options.addOption("i", true,
-                "Set the LWM2M or Bootstrap server PSK identity in ascii.\nUse none secure mode if not set.");
-        options.addOption("p", true,
-                "Set the LWM2M or Bootstrap server Pre-Shared-Key in hexa.\nUse none secure mode if not set.");
-        HelpFormatter formatter = new HelpFormatter();
-        formatter.setOptionComparator(null);
+		options.addOption("h", "help", false, "Display help information.");
+		options.addOption("n", true, String
+				.format("Set the endpoint name of the Client.\nDefault: the local hostname or '%s' if any.", ENDPOINT));
+		options.addOption("b", false, "If present use bootstrap.");
+		options.addOption("lh", true, "Set the local CoAP address of the Client.\n  Default: any local address.");
+		options.addOption("lp", true,
+				"Set the local CoAP port of the Client.\n  Default: A valid port value is between 0 and 65535.");
+		options.addOption("slh", true, "Set the secure local CoAP address of the Client.\nDefault: any local address.");
+		options.addOption("slp", true,
+				"Set the secure local CoAP port of the Client.\nDefault: A valid port value is between 0 and 65535.");
+		options.addOption("u", true, "Set the LWM2M or Bootstrap server URL.\nDefault: localhost:5683.");
+		options.addOption("i", true,
+				"Set the LWM2M or Bootstrap server PSK identity in ascii.\nUse none secure mode if not set.");
+		options.addOption("p", true,
+				"Set the LWM2M or Bootstrap server Pre-Shared-Key in hexa.\nUse none secure mode if not set.");
+		HelpFormatter formatter = new HelpFormatter();
+		formatter.setOptionComparator(null);
 
-        // Parse arguments
-        CommandLine cl = null;
-        try {
-            cl = new DefaultParser().parse(options, args);
-        } catch (ParseException e) {
-            System.err.println("Parsing failed.  Reason: " + e.getMessage());
-            formatter.printHelp(USAGE, options);
-            return;
-        }
+		// Parse arguments
+		CommandLine cl = null;
+		try {
+			cl = new DefaultParser().parse(options, args);
+		} catch (ParseException e) {
+			System.err.println("Parsing failed.  Reason: " + e.getMessage());
+			formatter.printHelp(USAGE, options);
+			return;
+		}
 
-        // Print help
-        if (cl.hasOption("help")) {
-            formatter.printHelp(USAGE, options);
-            return;
-        }
+		// Print help
+		if (cl.hasOption("help")) {
+			formatter.printHelp(USAGE, options);
+			return;
+		}
 
-        // Abort if unexpected options
-        if (cl.getArgs().length > 0) {
-            System.out.println("Unexpected option or arguments : " + cl.getArgList());
-            formatter.printHelp(USAGE, options);
-            return;
-        }
+		// Abort if unexpected options
+		if (cl.getArgs().length > 0) {
+			System.out.println("Unexpected option or arguments : " + cl.getArgList());
+			formatter.printHelp(USAGE, options);
+			return;
+		}
 
-        // Abort if we have not identity and key for psk.
-        if ((cl.hasOption("i") && !cl.hasOption("p")) || !cl.hasOption("i") && cl.hasOption("p")) {
-            System.out.println("You should precise identity and Pre-Shared-Key if you want to connect in PSK");
-            formatter.printHelp(USAGE, options);
-            return;
-        }
+		// Abort if we have not identity and key for psk.
+		if ((cl.hasOption("i") && !cl.hasOption("p")) || !cl.hasOption("i") && cl.hasOption("p")) {
+			System.out.println("You should precise identity and Pre-Shared-Key if you want to connect in PSK");
+			formatter.printHelp(USAGE, options);
+			return;
+		}
 
-        // Get endpoint name
-        String endpoint;
-        if (cl.hasOption("n")) {
-            endpoint = cl.getOptionValue("n");
-        } else {
-            try {
-                endpoint = InetAddress.getLocalHost().getHostName();
-            } catch (UnknownHostException e) {
-                endpoint = DEFAULT_ENDPOINT;
-            }
-        }
+		// Get endpoint name
+		String endpoint;
+		if (cl.hasOption("n")) {
+			endpoint = cl.getOptionValue("n");
+		} else {
+			try {
+				endpoint = InetAddress.getLocalHost().getHostName();
+			} catch (UnknownHostException e) {
+				endpoint = ENDPOINT;
+			}
+		}
 
-        // Get server URI
-        String serverURI;
-        if (cl.hasOption("u")) {
-            if (cl.hasOption("i"))
-                serverURI = "coaps://" + cl.getOptionValue("u");
-            else
-                serverURI = "coap://" + cl.getOptionValue("u");
-        } else {
-            if (cl.hasOption("i"))
-                serverURI = "coaps://localhost:5684";
-            else
-                serverURI = "coap://localhost:5683";
-        }
+		// Get server URI
+		String serverURI;
+		if (cl.hasOption("u")) {
+			if (cl.hasOption("i"))
+				serverURI = "coaps://" + cl.getOptionValue("u");
+			else
+				serverURI = "coap://" + cl.getOptionValue("u");
+		} else {
+			if (cl.hasOption("i"))
+				serverURI = "coaps://localhost:5684";
+			else
+				serverURI = "coap://localhost:5683";
+		}
 
-        // get security info
-        byte[] pskIdentity = null;
-        byte[] pskKey = null;
-        if (cl.hasOption("i") && cl.hasOption("p")) {
-            pskIdentity = cl.getOptionValue("i").getBytes();
-            pskKey = Hex.decodeHex(cl.getOptionValue("p").toCharArray());
-        }
+		// get security info
+		byte[] pskIdentity = null;
+		byte[] pskKey = null;
+		if (cl.hasOption("i") && cl.hasOption("p")) {
+			pskIdentity = cl.getOptionValue("i").getBytes();
+			pskKey = Hex.decodeHex(cl.getOptionValue("p").toCharArray());
+		}
 
-        // get local address
-        String localAddress = null;
-        int localPort = 0;
-        if (cl.hasOption("lh")) {
-            localAddress = cl.getOptionValue("lh");
-        }
-        if (cl.hasOption("lp")) {
-            localPort = Integer.parseInt(cl.getOptionValue("lp"));
-        }
+		// get local address
+		String localAddress = null;
+		int localPort = 0;
+		if (cl.hasOption("lh")) {
+			localAddress = cl.getOptionValue("lh");
+		}
+		if (cl.hasOption("lp")) {
+			localPort = Integer.parseInt(cl.getOptionValue("lp"));
+		}
 
-        // get secure local address
-        String secureLocalAddress = null;
-        int secureLocalPort = 0;
-        if (cl.hasOption("slh")) {
-            secureLocalAddress = cl.getOptionValue("slh");
-        }
-        if (cl.hasOption("slp")) {
-            secureLocalPort = Integer.parseInt(cl.getOptionValue("slp"));
-        }
+		// get secure local address
+		String secureLocalAddress = null;
+		int secureLocalPort = 0;
+		if (cl.hasOption("slh")) {
+			secureLocalAddress = cl.getOptionValue("slh");
+		}
+		if (cl.hasOption("slp")) {
+			secureLocalPort = Integer.parseInt(cl.getOptionValue("slp"));
+		}
 
-        createAndStartClient(endpoint, localAddress, localPort, secureLocalAddress, secureLocalPort, cl.hasOption("b"),
-                serverURI, pskIdentity, pskKey);
-    }
+		createAndStartClient(endpoint, localAddress, localPort, secureLocalAddress, secureLocalPort, cl.hasOption("b"),
+				serverURI, pskIdentity, pskKey);
+	}
 
-    public static void createAndStartClient(String endpoint, String localAddress, int localPort,
-            String secureLocalAddress, int secureLocalPort, boolean needBootstrap, String serverURI, byte[] pskIdentity,
-            byte[] pskKey) {
+	public static void createAndStartClient(String endpoint, String localAddress, int localPort,
+			String secureLocalAddress, int secureLocalPort, boolean needBootstrap, String serverURI, byte[] pskIdentity,
+			byte[] pskKey) {
 
-        // Initialize object list
-        ObjectsInitializer initializer = new ObjectsInitializer();
-        if (needBootstrap) {
-            if (pskIdentity == null)
-                initializer.setInstancesForObject(SECURITY, noSecBootstap(serverURI));
-            else
-                initializer.setInstancesForObject(SECURITY, pskBootstrap(serverURI, pskIdentity, pskKey));
-        } else {
-            if (pskIdentity == null) {
-                initializer.setInstancesForObject(SECURITY, noSec(serverURI, 123));
-                initializer.setInstancesForObject(SERVER, new Server(123, 30, BindingMode.U, false));
-            } else {
-                initializer.setInstancesForObject(SECURITY, psk(serverURI, 123, pskIdentity, pskKey));
-                initializer.setInstancesForObject(SERVER, new Server(123, 30, BindingMode.U, false));
-            }
-        }
-        
-        initializer.setInstancesForObject(DEVICE, new MyDevice());
-        initializer.setInstancesForObject(LOCATION, locationInstance);
-        initializer.setInstancesForObject(10000, telemetryEndpiontInstance);
-        List<LwM2mObjectEnabler> enablers = initializer.create(SECURITY, SERVER, DEVICE, LOCATION, 10000);
-        
-        
-        
-        // Create client
-        LeshanClientBuilder builder = new LeshanClientBuilder(endpoint);
-        builder.setLocalAddress(localAddress, localPort);
-        builder.setLocalSecureAddress(secureLocalAddress, secureLocalPort);
-        builder.setObjects(enablers);
-        final LeshanClient client = builder.build();
-        
-        telemetryEndpiontInstance.addResourceChangedListener(new ResourceChangedListener() {			
+		// Initialize object list
+		ObjectsInitializer initializer = new ObjectsInitializer();
+		if (needBootstrap) {
+			if (pskIdentity == null)
+				initializer.setInstancesForObject(SECURITY, noSecBootstap(serverURI));
+			else
+				initializer.setInstancesForObject(SECURITY, pskBootstrap(serverURI, pskIdentity, pskKey));
+		} else {
+			if (pskIdentity == null) {
+				initializer.setInstancesForObject(SECURITY, noSec(serverURI, 123));
+				initializer.setInstancesForObject(SERVER, new Server(123, 30, BindingMode.U, false));
+			} else {
+				initializer.setInstancesForObject(SECURITY, psk(serverURI, 123, pskIdentity, pskKey));
+				initializer.setInstancesForObject(SERVER, new Server(123, 30, BindingMode.U, false));
+			}
+		}
+
+		initializer.setInstancesForObject(DEVICE, new MyDevice());
+		initializer.setInstancesForObject(LOCATION, locationInstance);
+		initializer.setInstancesForObject(10000, telemetryEndpiontInstance);
+		initializer.setInstancesForObject(3303, temperatureInstance);
+		List<LwM2mObjectEnabler> enablers = initializer.create(SECURITY, SERVER, DEVICE, LOCATION, 10000, 3303);
+
+		// Create client
+		LeshanClientBuilder builder = new LeshanClientBuilder(endpoint);
+		builder.setLocalAddress(localAddress, localPort);
+		builder.setLocalSecureAddress(secureLocalAddress, secureLocalPort);
+		builder.setObjects(enablers);
+		final LeshanClient client = builder.build();
+
+		final TelemetryManager telemetryManager = new TelemetryManager(telemetryEndpiontInstance);
+		
+		temperatureInstance.addResourceChangedListener(new ResourceChangedListener() {
+
+			@Override
 			public void resourcesChanged(int... resourceIds) {
-				for(int ressourceId : resourceIds) {
-					if(ressourceId == 10001) {
-						String registrationTicket = telemetryEndpiontInstance.getUrl();
-						gateway = new AppIoTGateway(registrationTicket);
-						gateway.start();
-					}					
-				}				
+				telemetryManager.addMeasurement(3303, 0, 5700, temperatureInstance.getTimestamp().getTime(),
+						temperatureInstance.getTemperature());
 			}
 		});
-        
-        
-        LOG.info("Press 'w','a','s','d' to change reported Location.");
 
-        // Start the client
-        client.start();
+		manager.addDevice("1", "1");
+		manager.addListener(new SimulatedPlatformListener() {
+			@Override
+			public void onData(List<SensorData> datas) {
+				LOG.info("Got data");
+				for (SensorData data : datas) {
+					if (data.getSensorType().equals("TEMP")) {
+						temperatureInstance.updateValue((float) data.getValue());
+					}
+				}
+			}
+		});
 
-        // De-register on shutdown and stop client.
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                client.destroy(true); // send de-registration request before destroy
-            }
-        });
+		telemetryEndpiontInstance.addResourceChangedListener(new ResourceChangedListener() {
+			@Override
+			public void resourcesChanged(int... resourceIds) {
+				// manager.stop();
+				telemetryManager.init();
+				manager.start();
+				SimulatedDevice device = manager.getDeviceBySerialNumber("1");
+				device.start();
+			}
+		});
 
-        // Change the location through the Console
-        Scanner scanner = new Scanner(System.in);
-        while (scanner.hasNext()) {
-            String nextMove = scanner.next();
-            locationInstance.moveLocation(nextMove);
-        }
-        scanner.close();
-    }
+		LOG.info("Press 'w','a','s','d' to change reported Location.");
+
+		// Start the client
+		client.start();
+
+		// De-register on shutdown and stop client.
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run() {
+				client.destroy(true); // send de-registration request before
+										// destroy
+			}
+		});
+
+		// Change the location through the Console
+		Scanner scanner = new Scanner(System.in);
+		while (scanner.hasNext()) {
+			String nextMove = scanner.next();
+			locationInstance.moveLocation(nextMove);
+		}
+		scanner.close();
+	}
 }
