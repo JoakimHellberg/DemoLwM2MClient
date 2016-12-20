@@ -4,158 +4,124 @@ import static org.eclipse.leshan.LwM2mId.DEVICE;
 import static org.eclipse.leshan.LwM2mId.LOCATION;
 import static org.eclipse.leshan.LwM2mId.SECURITY;
 import static org.eclipse.leshan.LwM2mId.SERVER;
-import static org.eclipse.leshan.client.object.Security.noSec;
-import static org.eclipse.leshan.client.object.Security.noSecBootstap;
 import static org.eclipse.leshan.client.object.Security.psk;
-import static org.eclipse.leshan.client.object.Security.pskBootstrap;
+import static org.eclipse.leshan.client.object.Security.noSecBootstap;
 
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
-import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+import org.eclipse.leshan.ResponseCode;
 import org.eclipse.leshan.client.californium.LeshanClient;
 import org.eclipse.leshan.client.californium.LeshanClientBuilder;
+import org.eclipse.leshan.client.object.Device;
 import org.eclipse.leshan.client.object.Server;
+import org.eclipse.leshan.client.observer.LwM2mClientObserver;
 import org.eclipse.leshan.client.resource.LwM2mObjectEnabler;
 import org.eclipse.leshan.client.resource.ObjectsInitializer;
-import org.eclipse.leshan.client.resource.ResourceChangedListener;
+import org.eclipse.leshan.client.servers.DmServerInfo;
+import org.eclipse.leshan.client.servers.ServerInfo;
+import org.eclipse.leshan.core.model.LwM2mModel;
+import org.eclipse.leshan.core.model.ObjectLoader;
+import org.eclipse.leshan.core.node.LwM2mNode;
+import org.eclipse.leshan.core.node.LwM2mObjectInstance;
+import org.eclipse.leshan.core.node.LwM2mPath;
+import org.eclipse.leshan.core.node.codec.tlv.LwM2mNodeTlvDecoder;
 import org.eclipse.leshan.core.request.BindingMode;
 import org.eclipse.leshan.util.Hex;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.appiot.examples.simulated.platform.SimulatedPlatformListener;
 import com.appiot.examples.simulated.platform.SimulatedPlatformManager;
 import com.appiot.examples.simulated.platform.device.SensorData;
 import com.appiot.examples.simulated.platform.device.SimulatedDevice;
+import com.ericsson.appiot.example.ConnectivityHelper;
+
 
 public class App {
-	private static final Logger LOG = LoggerFactory.getLogger(App.class);
+	private static final Logger logger = Logger.getLogger("App"); 
+
 
 	public final static String ENDPOINT = "4EDBC968-244E-4997-BF51-81EE04726037";
 	private final static MyLocation locationInstance = new MyLocation();
-	private final static MyTelemetryEndpoint telemetryEndpiontInstance = new MyTelemetryEndpoint();
 	private final static MyTemperature temperatureInstance = new MyTemperature();
-	private final static String USAGE = "java -jar leshan-client-demo.jar [OPTION]";
-
+	
+	private final static MyConsole consoleInstance = new MyConsole(); 
 	private final static SimulatedPlatformManager manager = new SimulatedPlatformManager();
 
 	public static void main(final String[] args) {
-
-		// Define options for command line tools
-		Options options = new Options();
-
-		options.addOption("h", "help", false, "Display help information.");
-		options.addOption("n", true, String
-				.format("Set the endpoint name of the Client.\nDefault: the local hostname or '%s' if any.", ENDPOINT));
-		options.addOption("b", false, "If present use bootstrap.");
-		options.addOption("lh", true, "Set the local CoAP address of the Client.\n  Default: any local address.");
-		options.addOption("lp", true,
-				"Set the local CoAP port of the Client.\n  Default: A valid port value is between 0 and 65535.");
-		options.addOption("slh", true, "Set the secure local CoAP address of the Client.\nDefault: any local address.");
-		options.addOption("slp", true,
-				"Set the secure local CoAP port of the Client.\nDefault: A valid port value is between 0 and 65535.");
-		options.addOption("u", true, "Set the LWM2M or Bootstrap server URL.\nDefault: localhost:5683.");
-		options.addOption("i", true,
-				"Set the LWM2M or Bootstrap server PSK identity in ascii.\nUse none secure mode if not set.");
-		options.addOption("p", true,
-				"Set the LWM2M or Bootstrap server Pre-Shared-Key in hexa.\nUse none secure mode if not set.");
-		HelpFormatter formatter = new HelpFormatter();
-		formatter.setOptionComparator(null);
-
-		// Parse arguments
-		CommandLine cl = null;
-		try {
-			cl = new DefaultParser().parse(options, args);
-		} catch (ParseException e) {
-			System.err.println("Parsing failed.  Reason: " + e.getMessage());
-			formatter.printHelp(USAGE, options);
-			return;
-		}
-
-		// Print help
-		if (cl.hasOption("help")) {
-			formatter.printHelp(USAGE, options);
-			return;
-		}
-
-		// Abort if unexpected options
-		if (cl.getArgs().length > 0) {
-			System.out.println("Unexpected option or arguments : " + cl.getArgList());
-			formatter.printHelp(USAGE, options);
-			return;
-		}
-
-		// Abort if we have not identity and key for psk.
-		if ((cl.hasOption("i") && !cl.hasOption("p")) || !cl.hasOption("i") && cl.hasOption("p")) {
-			System.out.println("You should precise identity and Pre-Shared-Key if you want to connect in PSK");
-			formatter.printHelp(USAGE, options);
-			return;
-		}
-
-		// Get endpoint name
-		String endpoint;
-		if (cl.hasOption("n")) {
-			endpoint = cl.getOptionValue("n");
-		} else {
-			try {
-				endpoint = InetAddress.getLocalHost().getHostName();
-			} catch (UnknownHostException e) {
-				endpoint = ENDPOINT;
-			}
-		}
-
+		test();
+		String endpoint = "JockeLocalClient";
+ 		
 		// Get server URI
-		String serverURI;
-		if (cl.hasOption("u")) {
-			if (cl.hasOption("i"))
-				serverURI = "coaps://" + cl.getOptionValue("u");
-			else
-				serverURI = "coap://" + cl.getOptionValue("u");
-		} else {
-			if (cl.hasOption("i"))
-				serverURI = "coaps://localhost:5684";
-			else
-				serverURI = "coap://localhost:5683";
-		}
-
+		//String serverURI = "coaps://81.231.234.148:5683"; //coaps://13.81.123.255:5683"; //"lwm2mDemoServer.cloudapp.net:5684";  //coap://lwm2mgw.local:5683
+		//String serverURI = "coap://13.81.123.255:5683";
+		//String serverURI = "coaps://192.168.56.1:5684";//"coaps://10.13.0.104:5684";
+		//String serverURI = "coap://lwm2mdemobs.cloudapp.net:5683";//"coaps://lwm2mdemoserver.cloudapp.net:5684";
+		
+		//String serverURI = "coaps://192.168.1.155:5684";
+		String serverURI = "coaps://10.13.0.79:5684";
+		//String serverURI = "coaps://appiotlwm2m.cloudapp.net:5684";
+		
 		// get security info
-		byte[] pskIdentity = null;
-		byte[] pskKey = null;
-		if (cl.hasOption("i") && cl.hasOption("p")) {
-			pskIdentity = cl.getOptionValue("i").getBytes();
-			pskKey = Hex.decodeHex(cl.getOptionValue("p").toCharArray());
-		}
+		byte[] pskIdentity = "555".getBytes();
+		byte[] pskKey = Hex.decodeHex("353535".toCharArray());
 
+		String identity = new String(pskIdentity);
+		logger.log(Level.INFO, "identity: " + identity);
+
+		String key = new String(pskKey);
+		logger.log(Level.INFO, "PSK: " + key);
+		
+		
+		String ipAddress = "0.0.0.0";//ConnectivityHelper.getExternalIP();
+		
+//		try {
+//			InetAddress address = ConnectivityHelper.getLocalHostLANAddress("eth6");
+//			ipAddress = address.getHostAddress();
+//
+//		} catch (UnknownHostException e1) {
+//			System.out.println(e1.getMessage());
+//			e1.printStackTrace();
+//		}
+
+		logger.log(Level.INFO, "Resolved IP ADDRESS: " + ipAddress);
+		
 		// get local address
-		String localAddress = null;
-		int localPort = 0;
-		if (cl.hasOption("lh")) {
-			localAddress = cl.getOptionValue("lh");
-		}
-		if (cl.hasOption("lp")) {
-			localPort = Integer.parseInt(cl.getOptionValue("lp"));
-		}
+		String localAddress = ipAddress;
+		int localPort = 5685;
 
 		// get secure local address
-		String secureLocalAddress = null;
-		int secureLocalPort = 0;
-		if (cl.hasOption("slh")) {
-			secureLocalAddress = cl.getOptionValue("slh");
-		}
-		if (cl.hasOption("slp")) {
-			secureLocalPort = Integer.parseInt(cl.getOptionValue("slp"));
-		}
+		String secureLocalAddress = ipAddress;
+		int secureLocalPort = 5686;
 
-		createAndStartClient(endpoint, localAddress, localPort, secureLocalAddress, secureLocalPort, cl.hasOption("b"),
+		boolean needsBootstrap = false;
+		
+		
+		
+		createAndStartClient(endpoint, localAddress, localPort, secureLocalAddress, secureLocalPort, needsBootstrap,
 				serverURI, pskIdentity, pskKey);
 	}
+	
+	
+	  public static void test() {
+	        byte[] content = new byte[] {-56, 0, 36, 99, 111, 97, 112, 58, 47, 47, 108, 119, 109, 50, 109, 100, 101, 109, 111, 98, 115, 46, 99, 108, 111, 117, 100, 97, 112, 112, 46, 110, 101, 116, 58, 53, 54, 56, 51, -63, 1, 1, -63, 2, 3, -64, 3, -64, 4, -64, 5, -63, 6, 3, -64, 7, -64, 8, -64, 9, -63, 10, 111, -63, 11, 1};
+	        LwM2mPath path = new LwM2mPath("/0/0");
+	        InputStream is = App.class.getResourceAsStream("/oma-objects-spec.json");
+	        LwM2mModel model = new LwM2mModel(ObjectLoader.loadJsonStream(is));
+	        LwM2mNode lwM2mNode;
+	        try {
+	            lwM2mNode = LwM2mNodeTlvDecoder.decode(content, path, model, LwM2mObjectInstance.class);
+	            int id = lwM2mNode.getId();
+	            
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	        }
+
+
+	    }
 
 	public static void createAndStartClient(String endpoint, String localAddress, int localPort,
 			String secureLocalAddress, int secureLocalPort, boolean needBootstrap, String serverURI, byte[] pskIdentity,
@@ -163,74 +129,120 @@ public class App {
 
 		// Initialize object list
 		ObjectsInitializer initializer = new ObjectsInitializer();
-		if (needBootstrap) {
-			if (pskIdentity == null)
-				initializer.setInstancesForObject(SECURITY, noSecBootstap(serverURI));
-			else
-				initializer.setInstancesForObject(SECURITY, pskBootstrap(serverURI, pskIdentity, pskKey));
-		} else {
-			if (pskIdentity == null) {
-				initializer.setInstancesForObject(SECURITY, noSec(serverURI, 123));
-				initializer.setInstancesForObject(SERVER, new Server(123, 30, BindingMode.U, false));
-			} else {
-				initializer.setInstancesForObject(SECURITY, psk(serverURI, 123, pskIdentity, pskKey));
-				initializer.setInstancesForObject(SERVER, new Server(123, 30, BindingMode.U, false));
-			}
-		}
+		
+		// NO SEC
+		//initializer.setInstancesForObject(SECURITY, noSec(serverURI, 123));
+        //initializer.setInstancesForObject(SERVER, new Server(123, 30, BindingMode.U, false));
+		
+		//initializer.setInstancesForObject(SECURITY, noSecBootstap(serverURI));
+	       
+        // SEC
+		initializer.setInstancesForObject(SECURITY, psk(serverURI, 123, pskIdentity, pskKey));
+		initializer.setInstancesForObject(SERVER, new Server(123, 3600, BindingMode.U, false));
 
-		initializer.setInstancesForObject(DEVICE, new MyDevice());
+		initializer.setInstancesForObject(DEVICE, new Device("RASPBERRY", "Pi3", "12345", BindingMode.U.name()));
 		initializer.setInstancesForObject(LOCATION, locationInstance);
-		initializer.setInstancesForObject(10000, telemetryEndpiontInstance);
 		initializer.setInstancesForObject(3303, temperatureInstance);
-		List<LwM2mObjectEnabler> enablers = initializer.create(SECURITY, SERVER, DEVICE, LOCATION, 10000, 3303);
-
+		initializer.setInstancesForObject(3341, consoleInstance);
+		
+		List<LwM2mObjectEnabler> enablers = initializer.create(SECURITY, SERVER, DEVICE, LOCATION, 3303, 3341);
+		
 		// Create client
 		LeshanClientBuilder builder = new LeshanClientBuilder(endpoint);
 		builder.setLocalAddress(localAddress, localPort);
 		builder.setLocalSecureAddress(secureLocalAddress, secureLocalPort);
 		builder.setObjects(enablers);
+
 		final LeshanClient client = builder.build();
-
-		final TelemetryManager telemetryManager = new TelemetryManager(telemetryEndpiontInstance);
-		
-		temperatureInstance.addResourceChangedListener(new ResourceChangedListener() {
-
-			@Override
-			public void resourcesChanged(int... resourceIds) {
-				telemetryManager.addMeasurement(3303, 0, 5700, temperatureInstance.getTimestamp().getTime(),
-						temperatureInstance.getTemperature());
-			}
-		});
-
-		manager.addDevice("1", "1");
-		manager.addListener(new SimulatedPlatformListener() {
-			@Override
-			public void onData(List<SensorData> datas) {
-				LOG.info("Got data");
-				for (SensorData data : datas) {
-					if (data.getSensorType().equals("TEMP")) {
-						temperatureInstance.updateValue((float) data.getValue());
-					}
-				}
-			}
-		});
-
-		telemetryEndpiontInstance.addResourceChangedListener(new ResourceChangedListener() {
-			@Override
-			public void resourcesChanged(int... resourceIds) {
-				// manager.stop();
-				telemetryManager.init();
-				manager.start();
-				SimulatedDevice device = manager.getDeviceBySerialNumber("1");
-				device.start();
-			}
-		});
-
-		LOG.info("Press 'w','a','s','d' to change reported Location.");
 
 		// Start the client
 		client.start();
-
+		
+		// GPS
+		//GPSPipe.addListener(locationInstance);
+		//GPSPipe.start();
+		locationInstance.startFakeGPS();
+		
+		// TEMPERATURE
+		SimulatedPlatformManager manager = new SimulatedPlatformManager();
+		manager.addDevice("1", "1");
+		
+		manager.addListener(new SimulatedPlatformListener() {
+			public void onData(List<SensorData> datas) {
+				for(SensorData data : datas) {
+					if(data.getSensorType().equals("TEMP")) {
+						temperatureInstance.updateValue((float)data.getValue());
+					}
+				}				
+			}
+		});
+		manager.start();
+		SimulatedDevice device = manager.getDeviceBySerialNumber("1");
+		device.start();		
+		device.getTemperatureSensor().setReportInterval(1000);
+		
+		
+		
+		client.addObserver(new LwM2mClientObserver() {
+			
+			public void onUpdateTimeout(DmServerInfo server) {
+				logger.log(Level.SEVERE, "###UPDATE TIME OUT");
+				
+			}
+			
+			public void onUpdateSuccess(DmServerInfo server, String registrationID) {
+				logger.log(Level.INFO, "UPDATE SUCCESS");
+				
+			}
+			
+			public void onUpdateFailure(DmServerInfo server, ResponseCode responseCode, String errorMessage) {
+				logger.log(Level.SEVERE, "###UPDATE FAILURE");
+				logger.log(Level.SEVERE, "ResponseCode: " + responseCode.toString() + " : " + errorMessage);
+				
+			}
+			
+			public void onRegistrationTimeout(DmServerInfo server) {
+				logger.log(Level.SEVERE, "###REGISTRATION TIME OUT");
+			}
+			
+			public void onRegistrationSuccess(DmServerInfo server, String registrationID) {
+				logger.log(Level.INFO, "REGISTRATION SUCCESS");
+			}
+			
+			public void onRegistrationFailure(DmServerInfo server, ResponseCode responseCode, String errorMessage) {
+				logger.log(Level.SEVERE, "###REGISTRATION FAILURE");
+				logger.log(Level.SEVERE, "ResponseCode: " + responseCode.toString() + " : " + errorMessage);
+				
+			}
+			
+			public void onDeregistrationTimeout(DmServerInfo server) {
+				logger.log(Level.SEVERE, "###DEREGISTRATION TIME OUT");
+			}
+			
+			public void onDeregistrationSuccess(DmServerInfo server, String registrationID) {
+				logger.log(Level.INFO, "DEREGISTRATION SUCCESS");
+			}
+			
+			public void onDeregistrationFailure(DmServerInfo server, ResponseCode responseCode, String errorMessage) {
+				logger.log(Level.SEVERE, "###DEREGISTRATION FAILURE");
+				logger.log(Level.SEVERE, "ResponseCode: " + responseCode.toString() + " : " + errorMessage);
+			}
+			
+			public void onBootstrapTimeout(ServerInfo bsserver) {
+				logger.log(Level.SEVERE, "###BOOTSTRAP TIME OUT");
+			}
+			
+			public void onBootstrapSuccess(ServerInfo bsserver) {
+				logger.log(Level.INFO, "BOOTSTRAP SUCCESS");
+			}
+			
+			public void onBootstrapFailure(ServerInfo bsserver, ResponseCode responseCode, String errorMessage) {
+				logger.log(Level.SEVERE, "###BOOTSTRAP FAILURE");
+				logger.log(Level.SEVERE, "ResponseCode: " + responseCode.toString() + " : " + errorMessage);
+			}
+		});
+		
+		
 		// De-register on shutdown and stop client.
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
@@ -240,12 +252,6 @@ public class App {
 			}
 		});
 
-		// Change the location through the Console
-		Scanner scanner = new Scanner(System.in);
-		while (scanner.hasNext()) {
-			String nextMove = scanner.next();
-			locationInstance.moveLocation(nextMove);
-		}
-		scanner.close();
+
 	}
 }
