@@ -1,4 +1,4 @@
-package com.ericsson.appiot.examples.raspian.gps.gpspipe;
+package com.ericsson.appiot.lwm2m.gps;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.Vector;
@@ -9,44 +9,45 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-public class GPSPipe implements Runnable {
+public class GPSPipe implements Runnable, GpsSource {
 
 	private final Logger logger = Logger.getLogger(this.getClass().getName()); 
-	private static boolean go = true;
+	private boolean stop = false;
+	private Thread runningThread;
 	
-	private static boolean running = false;
+	private Vector<GPSPipeListener> listeners = new Vector<GPSPipeListener>(8);
 	
-	private static Vector<GPSPipeListener> _listeners = new Vector<GPSPipeListener>(8);
-	
-	public static void addListener(GPSPipeListener listener)
+	public void addListener(GPSPipeListener listener)
 	{
-		_listeners.add(listener);
+		listeners.add(listener);
 	}
 	
-	public static void removeListener(GPSPipeListener listener)
+	public void removeListener(GPSPipeListener listener)
 	{
-		_listeners.remove(listener);
+		listeners.remove(listener);
 	}
 	
-
-	
-	public static void start()
+	public void start()
 	{
-		GPSPipe program = new GPSPipe();
-		Thread t = new Thread(program);
-		t.start();
+		stop = false;
+		runningThread = new Thread(this);
+		runningThread.start();
 	}
+	
+	public void stop() {
+		stop = true;
+		runningThread.interrupt();
+	}
+	
 	
 	public void run() 
 	{
-		while (go) {
-			running = true;
-			
+		while (!stop) {
 			GPSReading reading = readGPS();
 			if(reading != null) {
-				for(int i = 0; i < _listeners.size(); i++) {
-					if(_listeners.elementAt(i) != null) {
-						_listeners.get(i).onReading(reading);
+				for(int i = 0; i < listeners.size(); i++) {
+					if(listeners.elementAt(i) != null) {
+						listeners.get(i).onReading(reading);
 					}
 				}
 			}
@@ -57,7 +58,6 @@ public class GPSPipe implements Runnable {
 				ie.printStackTrace();
 			}
 		}
-		running = false;		
 	}
 
 	private GPSReading readGPS() {		

@@ -1,4 +1,4 @@
-package com.ericsson.appiot.simplelwm2mclient.lwm2m;
+package com.ericsson.appiot.lwm2m.smartobject;
 
 import java.util.Date;
 import java.util.List;
@@ -14,7 +14,6 @@ import org.eclipse.leshan.core.response.ReadResponse;
 public class MyTemperature extends BaseInstanceEnabler {
 	private final Logger logger = Logger.getLogger(this.getClass().getName()); 
 
-
     private String units = "Cel";
     
     private float temperature;
@@ -24,11 +23,9 @@ public class MyTemperature extends BaseInstanceEnabler {
     private float minRangeValue = 0.0f;
     private float maxRangeValue = 100.0f;
     
-    
     public MyTemperature() {
     	this.timestamp = new Date();
-    }
-    
+    }    
     
     
     @Override
@@ -96,10 +93,7 @@ public class MyTemperature extends BaseInstanceEnabler {
 
 		} else {
 			logger.log(Level.INFO, "Nothing to fire!");
-		}
-		
-		
-        
+		}        
     }
 
 

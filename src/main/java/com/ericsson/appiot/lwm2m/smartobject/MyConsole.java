@@ -1,4 +1,4 @@
-package com.ericsson.appiot.simplelwm2mclient.lwm2m;
+package com.ericsson.appiot.lwm2m.smartobject;
 
 import java.util.logging.Logger;
 
@@ -15,19 +15,14 @@ public class MyConsole extends BaseInstanceEnabler {
     private String text;
     
     public MyConsole() {
-
     }
-    
-    
-    
     
     @Override
 	public WriteResponse write(int resourceid, LwM2mResource value) {
+    	logger.finest("Write on Text Resource " + resourceid + " value: " + value.getValue().toString());
     	setText(value.getValue().toString());
-		return super.write(resourceid, value);
+    	return WriteResponse.success();
 	}
-    
-    
 
 	@Override
     public ExecuteResponse execute(int resourceid, String params) {
@@ -57,8 +52,7 @@ public class MyConsole extends BaseInstanceEnabler {
 
 	public void setText(String value) {
 		this.text = value;
-		System.out.println("3341/0/5527 = " + getText());
+		System.out.println(getText());
 		fireResourcesChange(5527);
 	}
-
 }

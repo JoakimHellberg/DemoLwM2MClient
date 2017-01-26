@@ -1,14 +1,7 @@
-package com.ericsson.appiot.simplelwm2mclient.lwm2m;
+package com.ericsson.appiot.lwm2m.smartobject;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.StringTokenizer;
-import java.util.TimeZone;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -17,8 +10,8 @@ import org.eclipse.leshan.client.resource.BaseInstanceEnabler;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.util.Hex;
 
-import com.ericsson.appiot.examples.raspian.gps.gpspipe.GPSPipeListener;
-import com.ericsson.appiot.examples.raspian.gps.gpspipe.GPSReading;
+import com.ericsson.appiot.lwm2m.gps.GPSPipeListener;
+import com.ericsson.appiot.lwm2m.gps.GPSReading;
 
 public class MyLocation extends BaseInstanceEnabler implements GPSPipeListener {
 
@@ -34,71 +27,7 @@ public class MyLocation extends BaseInstanceEnabler implements GPSPipeListener {
     public MyLocation() {
         timestamp = new Date();
     }
-    
-    
-    private class FakeGPSSensor implements Runnable {
-
-    	List<GPSReading> readings;
-    	public FakeGPSSensor(List<GPSReading> readings) {
-    		this.readings = readings;
-    	}
-		
-		public void run() {
-			while(true) {
-				for(GPSReading reading : readings) {
-					onReading(reading);
-					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			}	
-		}
-    }
-    
-    
-    public void startFakeGPS() {
-    	try {
-        	InputStream is = MyLocation.class.getClassLoader().getResourceAsStream("dummyroute.txt");
-			BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-			StringBuilder result = new StringBuilder();
-			String line;
-			while((line = reader.readLine()) != null) {
-				result.append(line);
-			}
-			
-        	String route = result.toString();
-    		StringTokenizer st = new StringTokenizer(route, " ");
-    		List<GPSReading> readings = new Vector<GPSReading>();
-    		
-    		TimeZone tz = TimeZone.getTimeZone("UTC");
-    		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
-    		df.setTimeZone(tz);
-    		
-    		while(st.hasMoreTokens()) {
-    			String position = st.nextToken();
-    			String[] coords = position.split(",");
-    			float lon = Float.parseFloat(coords[0]);
-    			float lat = Float.parseFloat(coords[1]);
-    			
-    			GPSReading reading = new GPSReading();
-    			reading.setLon(lon);
-    			reading.setLat(lat);
-    			reading.setTime(df.format(new Date()));
-    			readings.add(reading);
-    		}
-    		
-    		FakeGPSSensor fake = new FakeGPSSensor(readings);
-    		Thread t = new Thread(fake);
-    		t.start();
-    		
-    	} catch(Exception e) {
-    		e.printStackTrace();
-    	}
-    	
-    }
+ 
 
     @Override
     public ReadResponse read(int resourceid) {
