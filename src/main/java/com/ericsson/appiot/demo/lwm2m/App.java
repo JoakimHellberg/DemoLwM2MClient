@@ -31,7 +31,7 @@ import com.ericsson.appiot.lwm2m.smartobject.MyConsole;
 import com.ericsson.appiot.lwm2m.smartobject.MyLocation;
 import com.ericsson.appiot.lwm2m.smartobject.MyTemperature;
 
-public class App  {
+public class App {
 	private static final Logger logger = Logger.getLogger("App"); 
 
 	/**
@@ -39,7 +39,14 @@ public class App  {
 	 * You can generate your own UUID here: https://www.uuidgenerator.net/version1
 	 * Then register the device to the bootstrap server: http://lwm2mdemobs.cloudapp.net/
 	 */
-	private final static String ENDPOINT = "4EDBC968-244E-4997-BF51-81EE04726037";
+	// smart building test
+	//private final static String ENDPOINT = "8677e32f-253f-4e0a-a34f-b8bc4d485c8b";
+	// DEV NG
+	//private final static String ENDPOINT = "09a6c85d-662f-4efd-917f-a0ca0a7e2420";
+	// Local
+	//private final static String ENDPOINT = "aabbe874-a6c7-43bd-a54e-3cae4cfb335b";
+	// RASP
+	private final static String ENDPOINT = "9a97f722-352c-4e85-845b-e8dc469760d2";
 	
 	/**
 	 * This is the bootstrap server uri for registering the device.
@@ -47,7 +54,9 @@ public class App  {
 	private static final String SERVER_URI = "coap://lwm2mdemobs.cloudapp.net:5683";
 	
 	private LeshanClient leshanClient;
-	
+	private SimulatedDevice device;
+	private SimulatedPlatformManager manager;
+	private GpsSource gpsDataSource;
 	
 	public static void main(final String[] args) {
 	
@@ -58,20 +67,20 @@ public class App  {
 
 	public void start(String serverUri, String endpoint) {
 		String ipAddress = "0.0.0.0";	
-		int localPort = 5685;
-		int secureLocalPort = 5686;
+		int localPort = 5683;
+		int secureLocalPort = 5684;
 
 		
 		// Smart Objects
 		MyLocation location = new MyLocation();
-		MyTemperature temperature = new MyTemperature();
+		final MyTemperature temperature = new MyTemperature();
 		MyConsole addressableTextDisplay = new MyConsole();
 		
 
 		// Initialize object list
 		ObjectsInitializer initializer = new ObjectsInitializer();
 		initializer.setInstancesForObject(SECURITY, noSecBootstap(serverUri));
-		initializer.setInstancesForObject(DEVICE, new Device("Ericsson", "RPi3 LwM2M Simple Test Device", ENDPOINT, BindingMode.U.name()));
+		initializer.setInstancesForObject(DEVICE, new Device("AppIoT", "Simple LwM2M Client", ENDPOINT, BindingMode.U.name()));
 		initializer.setInstancesForObject(LOCATION, location);
 		initializer.setInstancesForObject(3303, temperature);
 		initializer.setInstancesForObject(3341, addressableTextDisplay);
@@ -83,17 +92,17 @@ public class App  {
 		builder.setLocalAddress(ipAddress, localPort);
 		builder.setLocalSecureAddress(ipAddress, secureLocalPort);
 		builder.setObjects(enablers);
+		
 		leshanClient = builder.build();
 		leshanClient.addObserver(observer);
 		leshanClient.start();
 		
 		// Start GPS reporting
-		GpsSource gpsDataSource = new GPSMock();
+		gpsDataSource = new GPSMock();
 		gpsDataSource.addListener(location);
-		gpsDataSource.start();
 
 		// Start temperature reporting
-		SimulatedPlatformManager manager = new SimulatedPlatformManager();
+		manager = new SimulatedPlatformManager();
 		manager.addDevice("1", "1");
 		
 		manager.addListener(new SimulatedPlatformListener() {
@@ -105,10 +114,24 @@ public class App  {
 				}				
 			}
 		});
+		device = manager.getDeviceBySerialNumber("1");
+			
+		device.getTemperatureSensor().setReportInterval(1000);
+	}
+	
+	
+	private void start() {
+		gpsDataSource.start();
 		manager.start();
-		SimulatedDevice device = manager.getDeviceBySerialNumber("1");
-		device.start();		
-		device.getTemperatureSensor().setReportInterval(5000);
+		device.start();	
+
+	}
+	
+	private void stop() {
+		gpsDataSource.stop();
+		manager.stop();
+		device.stop();	
+
 	}
 	
 	
@@ -117,6 +140,7 @@ public class App  {
 		
 		public void onUpdateTimeout(DmServerInfo server) {
 			logger.log(Level.SEVERE, "###UPDATE TIME OUT");
+			stop();
 		}
 		
 		public void onUpdateSuccess(DmServerInfo server, String registrationID) {
@@ -126,6 +150,7 @@ public class App  {
 		public void onUpdateFailure(DmServerInfo server, ResponseCode responseCode, String errorMessage) {
 			logger.log(Level.SEVERE, "###UPDATE FAILURE");
 			logger.log(Level.SEVERE, "ResponseCode: " + responseCode.toString() + " : " + errorMessage);
+			stop();
 		}
 		
 		public void onRegistrationTimeout(DmServerInfo server) {
@@ -134,28 +159,34 @@ public class App  {
 		
 		public void onRegistrationSuccess(DmServerInfo server, String registrationID) {
 			logger.log(Level.INFO, "REGISTRATION SUCCESS");
+			start();
 		}
 		
 		public void onRegistrationFailure(DmServerInfo server, ResponseCode responseCode, String errorMessage) {
 			logger.log(Level.SEVERE, "###REGISTRATION FAILURE");
 			logger.log(Level.SEVERE, "ResponseCode: " + responseCode.toString() + " : " + errorMessage);
+			stop();
 		}
 		
 		public void onDeregistrationTimeout(DmServerInfo server) {
 			logger.log(Level.SEVERE, "###DEREGISTRATION TIME OUT");
+			stop();
 		}
 		
 		public void onDeregistrationSuccess(DmServerInfo server, String registrationID) {
 			logger.log(Level.INFO, "DEREGISTRATION SUCCESS");
+			stop();
 		}
 		
 		public void onDeregistrationFailure(DmServerInfo server, ResponseCode responseCode, String errorMessage) {
 			logger.log(Level.SEVERE, "###DEREGISTRATION FAILURE");
 			logger.log(Level.SEVERE, "ResponseCode: " + responseCode.toString() + " : " + errorMessage);
+			stop();
 		}
 		
 		public void onBootstrapTimeout(ServerInfo bsserver) {
 			logger.log(Level.SEVERE, "###BOOTSTRAP TIME OUT");
+			stop();
 		}
 		
 		public void onBootstrapSuccess(ServerInfo bsserver) {
@@ -165,6 +196,7 @@ public class App  {
 		public void onBootstrapFailure(ServerInfo bsserver, ResponseCode responseCode, String errorMessage) {
 			logger.log(Level.SEVERE, "###BOOTSTRAP FAILURE");
 			logger.log(Level.SEVERE, "ResponseCode: " + responseCode.toString() + " : " + errorMessage);
+			stop();
 		}
 	};    	
 	

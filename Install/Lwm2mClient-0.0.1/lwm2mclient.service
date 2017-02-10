@@ -1,0 +1,8 @@
+[Unit]
+Description=Some text
+
+[Service]
+ExecStart=/opt/LWM2MClient/Start.sh
+
+[Install]
+WantedBy=multi-user.target

@@ -59,7 +59,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.ericsson.appiot.simplelwm2mclient.lwm2m.App</mainClass>
+                            <mainClass>com.ericsson.appiot.demo.lwm2m.App</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

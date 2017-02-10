@@ -20,8 +20,13 @@ public class MyConsole extends BaseInstanceEnabler {
     @Override
 	public WriteResponse write(int resourceid, LwM2mResource value) {
     	logger.finest("Write on Text Resource " + resourceid + " value: " + value.getValue().toString());
-    	setText(value.getValue().toString());
-    	return WriteResponse.success();
+    	 switch (resourceid) {
+         	case 5527:
+         		setText(value.getValue().toString());
+         		return WriteResponse.success();
+         	default:
+         		return WriteResponse.notFound();
+    	 }
 	}
 
 	@Override
