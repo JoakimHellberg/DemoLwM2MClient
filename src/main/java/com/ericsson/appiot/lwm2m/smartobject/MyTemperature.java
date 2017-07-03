@@ -33,8 +33,8 @@ public class MyTemperature extends BaseInstanceEnabler {
         switch (resourceid) {
         case 5605:
         	timestamp = new Date();
-        	setMaxMeasuredValue(0.0f);
-        	setMinMeasuredValue(0.0f);
+        	setMaxMeasuredValue(temperature);
+        	setMinMeasuredValue(temperature);
         	fireResourcesChange(0, 5601, 5602);
         	return ExecuteResponse.success();
         default: 
@@ -68,7 +68,7 @@ public class MyTemperature extends BaseInstanceEnabler {
     	timestamp = new Date();
     	List<Integer> resourcesChanged = new Vector<Integer>();
     	resourcesChanged.add(5700);
-    	resourcesChanged.add(0);
+    	//resourcesChanged.add(0);
         
         if(temperature > maxMeasuredValue) {
         	maxMeasuredValue = temperature;
