@@ -21,17 +21,31 @@ import com.appiot.examples.simulated.platform.SimulatedPlatformListener;
 import com.appiot.examples.simulated.platform.SimulatedPlatformManager;
 import com.appiot.examples.simulated.platform.device.SensorData;
 import com.appiot.examples.simulated.platform.device.SimulatedDevice;
-import com.ericsson.appiot.lwm2m.gps.GPSMock;
-import com.ericsson.appiot.lwm2m.gps.GpsSource;
-import com.ericsson.appiot.lwm2m.smartobject.MyAddressableTextDisplay;
-import com.ericsson.appiot.lwm2m.smartobject.MyFirmwareUpdate;
-import com.ericsson.appiot.lwm2m.smartobject.MyLocation;
-import com.ericsson.appiot.lwm2m.smartobject.MyTemperature;
+import com.ericsson.appiot.demo.lwm2m.gps.GPSMock;
+import com.ericsson.appiot.demo.lwm2m.gps.GpsSource;
+import com.ericsson.appiot.demo.lwm2m.smartobject.MyAddressableTextDisplay;
+import com.ericsson.appiot.demo.lwm2m.smartobject.MyFirmwareUpdate;
+import com.ericsson.appiot.demo.lwm2m.smartobject.MyLocation;
+import com.ericsson.appiot.demo.lwm2m.smartobject.MyTemperature;
 
 public class App {
 	
 	private final Logger logger = Logger.getLogger(this.getClass().getName());
 
+	/**
+	 * Make sure ENDPOINT is unique for your application! Otherwise you may run
+	 * into conflicts with other applications. You can generate your own UUID
+	 * here: https://www.uuidgenerator.net/version1 Then register the device to
+	 * the bootstrap server: http://lwm2mdemobs.cloudapp.net/
+	 */
+	private final static String ENDPOINT = "143a801a-d9ba-4c38-b23f-0493cc75e7c2";
+
+	/**
+	 * This is the bootstrap server uri for registering the device. Replace this
+	 * value with the url for your bootstrap server.
+	 */
+	private static final String SERVER_URI = "coap://40.69.67.129:5673";
+	
 	
 	/** SMART OBJECT ID'S */
 	private static final int SECURITY_ID = 0;
@@ -42,29 +56,12 @@ public class App {
 	private static final int TEMPERATURE_ID = 3303;
 	private static final int ADDRESSABLE_TEXT_DISPLAY_ID = 3341;
 
-
-	/**
-	 * Make sure ENDPOINT is unique for your application! Otherwise you may run
-	 * into conflicts with other applications. You can generate your own UUID
-	 * here: https://www.uuidgenerator.net/version1 Then register the device to
-	 * the bootstrap server: http://lwm2mdemobs.cloudapp.net/
-	 */
-
-	private final static String ENDPOINT = "143a801a-d9ba-4c38-b23f-0493cc75e7c2";
-
-	/**
-	 * This is the bootstrap server uri for registering the device. Replace this
-	 * value with the url for your bootstrap server.
-	 */
-	private static final String SERVER_URI = "coap://40.69.67.129:5673";
-
 	private LeshanClient leshanClient;
 	private SimulatedDevice simulatedDevice;
 	private SimulatedPlatformManager manager;
 	private GpsSource gpsDataSource;
 
 	public static void main(final String[] args) {
-
 		App app = new App();
 		app.register(SERVER_URI, ENDPOINT);
 	}
@@ -75,7 +72,7 @@ public class App {
 		int secureLocalPort = 5686;
 
 		// Smart Objects
-		Device device = new Device("AppIoT", "Simple LwM2M Client",	ENDPOINT, BindingMode.U.name());
+		Device device = new Device("AppIoT", "Demo LwM2M Client", ENDPOINT, BindingMode.U.name());
 		MyFirmwareUpdate firmwareUpdate = new MyFirmwareUpdate();
 		MyLocation location = new MyLocation();
 		final MyTemperature temperature = new MyTemperature();

@@ -2,12 +2,12 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>com.ericsson.appiot.lwm2m.client.demo</groupId>
-	<artifactId>SimpleLwm2mClient</artifactId>
+	<groupId>com.ericsson.appiot.demo.lwm2m.client</groupId>
+	<artifactId>demo-lwm2m-client</artifactId>
 	<packaging>jar</packaging>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0</version>
 
-	<name>SimpleLwm2mClient</name>
+	<name>DemoLwm2mClient</name>
 	<url>http://maven.apache.org</url>
 
 	<properties>
@@ -55,11 +55,6 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-log4j12</artifactId>
 			<version>1.7.5</version>
-		</dependency>
-		<dependency>
-			<groupId>com.pi4j</groupId>
-			<artifactId>pi4j-gpio-extension</artifactId>
-			<version>1.0</version>
 		</dependency>
 	</dependencies>
 	<repositories>
