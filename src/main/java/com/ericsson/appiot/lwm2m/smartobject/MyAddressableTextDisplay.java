@@ -9,12 +9,12 @@ import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.core.response.WriteResponse;
 
 
-public class MyConsole extends BaseInstanceEnabler {
+public class MyAddressableTextDisplay extends BaseInstanceEnabler {
 	private final Logger logger = Logger.getLogger(this.getClass().getName()); 
 
     private String text;
     
-    public MyConsole() {
+    public MyAddressableTextDisplay() {
     }
     
     @Override

@@ -9,6 +9,11 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+/**
+ * Simple wrapper for using linux gpspipe.
+ * @author Joakim Hellberg
+ *
+ */
 public class GPSPipe implements Runnable, GpsSource {
 
 	private final Logger logger = Logger.getLogger(this.getClass().getName()); 
@@ -64,7 +69,6 @@ public class GPSPipe implements Runnable, GpsSource {
 		GPSReading result = null;
 		try {
 			String command = "gpspipe -w -n 10";
-			//logger.fine("executing command on OS: " + command);
 			Process p = Runtime.getRuntime().exec(command);
 			p.waitFor();
 			int exitCode = p.exitValue();
@@ -88,7 +92,7 @@ public class GPSPipe implements Runnable, GpsSource {
 		    	if(classType != null && classType.equals("TPV")) {
 		    		
 			    	String tag = obj.get("tag").getAsString();
-			    	if(tag != null) { // && (tag.equals("GLL") || classType.equals("0x0106"))) {
+			    	if(tag != null) { 
 			    		result = new GPSReading();
 			    		
 				    	float lat = obj.get("lat").getAsFloat();

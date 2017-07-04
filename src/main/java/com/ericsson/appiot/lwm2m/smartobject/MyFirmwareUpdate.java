@@ -1,12 +1,8 @@
 package com.ericsson.appiot.lwm2m.smartobject;
 
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.Level;
@@ -23,7 +19,7 @@ import org.eclipse.leshan.core.response.ExecuteResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.core.response.WriteResponse;
 
-public class MyFirmwareUpgrade extends BaseInstanceEnabler {
+public class MyFirmwareUpdate extends BaseInstanceEnabler {
 	private final Logger logger = Logger.getLogger(this.getClass().getName());
 
 	public static final int RESOURCE_ID_PACKAGE = 0;
@@ -52,98 +48,20 @@ public class MyFirmwareUpgrade extends BaseInstanceEnabler {
 	public static final int UPDATE_RESULT_FIRMWARE_UPDATE_FAILED = 8;
 	public static final int UPDATE_RESULT_UNSUPPORTED_PROTOCOL = 9;
 
-	private byte[] packageData;
 	private String packageUri;
-	private int state = 0;
-	private int updateResult;
+	private int state = STATE_IDLE;
+	private int updateResult = UPDATE_RESULT_INITIAL;
 	private String packageName = "New package";
 	private String packageVersion = "1.0";
 	private int protocolSupport = 3;
 	private int deliveryMethod = 0;
 
-	public MyFirmwareUpgrade() {
+	public MyFirmwareUpdate() {
 	}
-
-	@Override
-	public WriteResponse write(int resourceid, LwM2mResource value) {
-		logger.info("Write on Text Resource " + resourceid + " value: " + value.getValue().toString());
-		switch (resourceid) {
-		case RESOURCE_ID_PACKAGE:
-			return WriteResponse.notFound();
-		case RESOURCE_ID_PACKAGE_URI:
-			this.packageUri = value.getValue().toString();
-			startDownload();
-			return WriteResponse.success();
-		default:
-			return WriteResponse.notFound();
-		}
-	}
-
-	@Override
-	public ExecuteResponse execute(int resourceid, String params) {
-		switch (resourceid) {
-		case RESOURCE_ID_UPDATE:
-			startFirmwareUpdate();
-			return ExecuteResponse.success();
-		default:
-			return super.execute(resourceid, params);
-		}
-	}
-
-	private void startFirmwareUpdate() {
-		try {
-			setState(STATE_UPDATING);
-			setUpdateResult(UPDATE_RESULT_INITIAL);
-
-			Thread.sleep(5000);
-
-			setUpdateResult(UPDATE_RESULT_SUCCESS);
-		} catch (Exception e) {
-			setState(STATE_IDLE);
-			setUpdateResult(UPDATE_RESULT_FIRMWARE_UPDATE_FAILED);
-		}
-	}
-
-	private void startDownload() {
-		try {
-			setState(STATE_DOWLOADING);
-			String workingDirName = System.getProperty("user.dir");
-			File packagesDir = new File(workingDirName + File.pathSeparator + "packages");
-
-			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_hh:ss");
-
-			File packageFile = new File(packagesDir, sdf.format(new Date()));
-			//String contentType = "text/xml";
-			HttpGet request = new HttpGet(URLEncoder.encode(this.packageUri));
-			// request.addHeader("Authorization", authorizationHeader);
-			// request.addHeader("Content-Type", contentType);
-
-			HttpClient httpClient = HttpClientBuilder.create().build();
-			HttpResponse response = httpClient.execute(request);
-
-			int responseCode = response.getStatusLine().getStatusCode();
-			logger.log(Level.FINEST, "[GatewaySDK] Response Code: " + responseCode);
-
-			if (responseCode < 200 || responseCode > 299) {
-				String reason = response.getStatusLine().getReasonPhrase();
-				setState(STATE_IDLE);
-				setUpdateResult(UPDATE_RESULT_INVALID_URI);
-			}
-
-			InputStream is = response.getEntity().getContent();
-			FileUtils.copyInputStreamToFile(is, packageFile);
-			setState(STATE_DOWNLOADED);
-
-		} catch (Exception e) {
-			setState(STATE_IDLE);
-			setUpdateResult(UPDATE_RESULT_CONNECTION_LOST_DURING_DOWNLOAD);
-		}
-	}
-
 
 	@Override
 	public ReadResponse read(int resourceid) {
-		logger.finest("Read on Text Resource " + resourceid);
+		logger.finest("Read on Resource " + resourceid);
 		switch (resourceid) {
 		case RESOURCE_ID_UPDATE_RESULT:
 			return ReadResponse.success(resourceid, this.updateResult);
@@ -162,15 +80,112 @@ public class MyFirmwareUpgrade extends BaseInstanceEnabler {
 			return super.read(resourceid);
 		}
 	}
+	
+	@Override
+	public WriteResponse write(int resourceid, LwM2mResource value) {
+		logger.info("Write on Resource " + resourceid + " value: " + value.getValue().toString());
+		switch (resourceid) {
+		case RESOURCE_ID_PACKAGE:
+			return WriteResponse.notFound();
+		case RESOURCE_ID_PACKAGE_URI:
+			this.packageUri = value.getValue().toString();
+			startDownload();
+			return WriteResponse.success();
+		default:
+			return WriteResponse.notFound();
+		}
+	}
+
+	@Override
+	public ExecuteResponse execute(int resourceid, String params) {
+		logger.info("Execute on Resource " + resourceid);
+		switch (resourceid) {
+		case RESOURCE_ID_UPDATE:
+			startFirmwareUpdate();
+			return ExecuteResponse.success();
+		default:
+			return super.execute(resourceid, params);
+		}
+	}
+
+	private void startFirmwareUpdate() {
+		logger.log(Level.INFO, "Starting upgrade.");
+		try {
+			setState(STATE_UPDATING);
+			setUpdateResult(UPDATE_RESULT_INITIAL);
+
+			// Apply firmware upgrade
+			Thread.sleep(5000);
+
+			setUpdateResult(UPDATE_RESULT_SUCCESS);
+			setState(STATE_IDLE);
+			logger.log(Level.INFO, "Upgrade complete.");
+
+		} catch (Exception e) {
+			setState(STATE_IDLE);
+			setUpdateResult(UPDATE_RESULT_FIRMWARE_UPDATE_FAILED);
+			logger.log(Level.INFO, "Upgrade failed.");
+
+		}
+	}
+
+	private void startDownload() {
+		logger.log(Level.INFO, "Starting download.");
+
+		try {
+			setState(STATE_DOWLOADING);
+			String workingDirName = System.getProperty("user.dir");
+			File packagesDir = new File(workingDirName + File.separatorChar + "packages");
+
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_hhmmss");
+
+			File packageFile = new File(packagesDir, sdf.format(new Date()));
+			HttpGet request = new HttpGet(this.packageUri);
+
+			HttpClient httpClient = HttpClientBuilder.create().build();
+			HttpResponse response = httpClient.execute(request);
+
+			int responseCode = response.getStatusLine().getStatusCode();
+			logger.log(Level.FINEST, "[GatewaySDK] Response Code: " + responseCode);
+
+			if (responseCode < 200 || responseCode > 299) {
+				String reason = response.getStatusLine().getReasonPhrase();
+				logger.log(Level.SEVERE, "Could not download firmware update. Got response code " + responseCode + " " + reason);
+				setState(STATE_IDLE);
+				setUpdateResult(UPDATE_RESULT_INVALID_URI);
+				return;
+			}
+			
+			InputStream is = response.getEntity().getContent();
+			FileUtils.copyInputStreamToFile(is, packageFile);
+			setState(STATE_DOWNLOADED);
+			logger.log(Level.INFO, "Download complete.");
+		} catch (IllegalArgumentException iae) {
+			setState(STATE_IDLE);
+			setUpdateResult(UPDATE_RESULT_INVALID_URI);
+			logger.log(Level.INFO, "Download failed.");
+		}
+		catch (IOException e) {
+			setState(STATE_IDLE);
+			setUpdateResult(UPDATE_RESULT_CONNECTION_LOST_DURING_DOWNLOAD);
+			logger.log(Level.INFO, "Download failed.");
+		}
+	}
 
 	public void setUpdateResult(int updateResult) {
 		this.updateResult = updateResult;
 		fireResourcesChange(RESOURCE_ID_UPDATE_RESULT);
+		logger.log(Level.INFO, "Update result is " + updateResult);
 	}
 
 	public void setState(int state) {
 		this.state = state;
+		if(state == STATE_DOWNLOADED) {
+			this.packageUri = "";
+		}
 		fireResourcesChange(RESOURCE_ID_STATE);
-	}
-
+		logger.log(Level.INFO, "State is " + state);
+	}	
 }
+
+

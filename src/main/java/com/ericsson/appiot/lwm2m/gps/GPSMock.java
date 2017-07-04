@@ -11,6 +11,11 @@ import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.Vector;
 
+/**
+ * Dummy {@link GpsSource} implementation to be used for simulating data.
+ * @author Joakim Hellberg
+ *
+ */
 public class GPSMock implements Runnable, GpsSource {
 	List<GPSReading> readings;
 
@@ -20,8 +25,7 @@ public class GPSMock implements Runnable, GpsSource {
 	private Vector<GPSPipeListener> listeners = new Vector<GPSPipeListener>(8);
 
 	public GPSMock() {	
-	}
-	
+	}	
 	
 	public void addListener(GPSPipeListener listener) {
 		listeners.add(listener);
@@ -30,8 +34,6 @@ public class GPSMock implements Runnable, GpsSource {
 	public void removeListener(GPSPipeListener listener) {
 		listeners.remove(listener);
 	}
-
-
 
 	public void run() {
 		while (!stop) {
@@ -43,12 +45,8 @@ public class GPSMock implements Runnable, GpsSource {
 						}
 					}
 				}
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				try {Thread.sleep(1000);} 
+				catch (InterruptedException e) {} // Ignore
 			}
 		}
 	}

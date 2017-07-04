@@ -1,10 +1,7 @@
 package com.ericsson.appiot.lwm2m.gps;
 
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Locale;
 
 import javax.xml.bind.DatatypeConverter;
 
