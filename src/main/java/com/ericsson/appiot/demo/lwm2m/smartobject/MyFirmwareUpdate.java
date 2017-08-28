@@ -8,6 +8,8 @@ import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.xml.bind.DatatypeConverter;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -86,7 +88,8 @@ public class MyFirmwareUpdate extends BaseInstanceEnabler {
 		logger.info("Write on Resource " + resourceid + " value: " + value.getValue().toString());
 		switch (resourceid) {
 		case RESOURCE_ID_PACKAGE:
-			return WriteResponse.notFound();
+			storePackageFile(value.getValue().toString());
+			return WriteResponse.success();
 		case RESOURCE_ID_PACKAGE_URI:
 			this.packageUri = value.getValue().toString();
 			startDownload();
@@ -125,7 +128,21 @@ public class MyFirmwareUpdate extends BaseInstanceEnabler {
 			setState(STATE_IDLE);
 			setUpdateResult(UPDATE_RESULT_FIRMWARE_UPDATE_FAILED);
 			logger.log(Level.INFO, "Upgrade failed.");
-
+		}
+	}
+	
+	private void storePackageFile(String value) {
+		byte[] packageData = DatatypeConverter.parseBase64Binary(value);
+		String workingDirName = System.getProperty("user.dir");
+		File packagesDir = new File(workingDirName + File.separatorChar + "packages");
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_hhmmss");
+		File packageFile = new File(packagesDir, sdf.format(new Date()));
+		try {
+			FileUtils.writeByteArrayToFile(packageFile, packageData);
+		} catch (IOException e) {
+			setState(STATE_IDLE);
+			setUpdateResult(UPDATE_RESULT_NOT_ENOUGH_FLASH_MEMORY);
+			logger.log(Level.INFO, "Firmware update file storage failed.");
 		}
 	}
 

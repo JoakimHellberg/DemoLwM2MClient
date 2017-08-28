@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
+  <Object ObjectType="MODefinition">
+    <Name>Location</Name>
+    <Description1>This LWM2M Objects provide a range of device related information which can be queried by the LWM2M Server, and a device reboot and factory reset function.</Description1>
+    <ObjectID>6</ObjectID>
+    <ObjectURN>urn:oma:lwm2m:ext:6</ObjectURN>
+    <MultipleInstances>Single</MultipleInstances>
+    <Mandatory>Optional</Mandatory>
+    <MandatoryBoolean>false</MandatoryBoolean>
+    <Resources>
+      <Item ID="2">
+        <Name>Altitude</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <MandatoryBoolean>false</MandatoryBoolean>
+        <Type>Float</Type>
+        <RangeEnumeration/>
+        <Units>m</Units>
+        <Description>The decimal notation of altitude in meters above sea level.</Description>
+      </Item>
+      <Item ID="4">
+        <Name>Velocity</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <MandatoryBoolean>false</MandatoryBoolean>
+        <Type>Opaque</Type>
+        <RangeEnumeration/>
+        <Units>Refers to 3GPP GAD specs</Units>
+        <Description>The velocity of the device as defined in 3GPP 23.032 GAD specification. This set of values may not be available if the device is static.</Description>
+      </Item>
+      <Item ID="5">
+        <Name>Timestamp</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <MandatoryBoolean>true</MandatoryBoolean>
+        <Type>Time</Type>
+        <RangeEnumeration>0-6</RangeEnumeration>
+        <Units/>
+        <Description>The timestamp of when the location measurement was performed.</Description>
+      </Item>
+      <Item ID="3">
+        <Name>Uncertainty</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <MandatoryBoolean>false</MandatoryBoolean>
+        <Type>Float</Type>
+        <RangeEnumeration/>
+        <Units>m</Units>
+        <Description>The accuracy of the position in meters.</Description>
+      </Item>
+      <Item ID="1">
+        <Name>Longitude</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <MandatoryBoolean>true</MandatoryBoolean>
+        <Type>Float</Type>
+        <RangeEnumeration/>
+        <Units>Deg</Units>
+        <Description>The decimal notation of longitude, e.g. 153.21760 [World Geodetic System 1984].</Description>
+      </Item>
+      <Item ID="0">
+        <Name>Latitude</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <MandatoryBoolean>true</MandatoryBoolean>
+        <Type>Float</Type>
+        <RangeEnumeration/>
+        <Units>Deg</Units>
+        <Description>The decimal notation of latitude, e.g. -43.5723 [World Geodetic System 1984].</Description>
+      </Item>
+    </Resources>
+    <Description2/>
+  </Object>
+</LWM2M>

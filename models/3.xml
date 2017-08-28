@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
+  <Object ObjectType="MODefinition">
+    <Name>Device</Name>
+    <Description1>This LWM2M Object provides a range of device related information which can be queried by the LWM2M Server, and a device reboot and factory reset function.</Description1>
+    <ObjectID>3</ObjectID>
+    <ObjectURN>urn:oma:lwm2m:ext:3</ObjectURN>
+    <MultipleInstances>Single</MultipleInstances>
+    <Mandatory>Optional</Mandatory>
+    <MandatoryBoolean>false</MandatoryBoolean>
+    <Resources>
+      <Item ID="6">
+        <Name>Available Power Sources</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Multiple</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <MandatoryBoolean>false</MandatoryBoolean>
+        <Type>Integer</Type>
+        <RangeEnumeration>0-7</RangeEnumeration>
+        <Units/>
+        <Description>0 – DC power
+1 – Internal Battery
+2 – External Battery
+4 – Power over Ethernet
+5 – USB
+6 – AC (Mains) power
+7 – Solar</Description>
+      </Item>
+      <Item ID="4">
+        <Name>Reboot</Name>
+        <Operations>E</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <MandatoryBoolean>true</MandatoryBoolean>
+        <Type>String</Type>
+        <RangeEnumeration/>
+        <Units/>
+        <Description>Reboot the LWM2M Device to restore the Device from unexpected firmware failure.</Description>
+      </Item>
+      <Item ID="11">
+        <Name>Error Code</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Multiple</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <MandatoryBoolean>true</MandatoryBoolean>
+        <Type>Integer</Type>
+        <RangeEnumeration/>
+        <Units/>
+        <Description>0=No error
+1=Low battery power
+2=External power supply off
+3=GPS module failure
+4=Low received signal strength
+5=Out of memory
+6=SMS failure
+7=IP connectivity failure
+8=Peripheral malfunction
+
+When the single Device Object Instance is initiated, there is only one error code Resource Instance whose value is equal to 0 that means no error. When the first error happens, the LWM2M Client changes error code Resource Instance to any non-zero value to indicate the error type. When any other error happens, a new error code Resource Instance is created.
+This error code Resource MAY be observed by the LWM2M Server. How to deal with LWM2M Client’s error report depends on the policy of the LWM2M Server.</Description>
+      </Item>
+      <Item ID="8">
+        <Name>Power Source Current</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Multiple</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <MandatoryBoolean>false</MandatoryBoolean>
+        <Type>Integer</Type>
+        <RangeEnumeration/>
+        <Units>mA</Units>
+        <Description>Present current for each Available Power Source</Description>
+      </Item>
+      <Item ID="0">
+        <Name>Manufacturer</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <MandatoryBoolean>false</MandatoryBoolean>
+        <Type>String</Type>
+        <RangeEnumeration/>
+        <Units/>
+        <Description>Human readable manufacturer name</Description>
+      </Item>
+      <Item ID="10">
+        <Name>Memory Free</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <MandatoryBoolean>false</MandatoryBoolean>
+        <Type>Integer</Type>
+        <RangeEnumeration/>
+        <Units>KB</Units>
+        <Description>Estimated current available amount of storage space which can store data and software in the LWM2M Device (expressed in kilobytes).</Description>
+      </Item>
+      <Item ID="3">
+        <Name>Firmware Version</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <MandatoryBoolean>false</MandatoryBoolean>
+        <Type>String</Type>
+        <RangeEnumeration/>
+        <Units/>
+        <Description>Current firmware version</Description>
+      </Item>
+      <Item ID="16">
+        <Name>Supported Binding and Modes</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Mandatory</Mandatory>
+        <MandatoryBoolean>true</MandatoryBoolean>
+        <Type>String</Type>
+        <RangeEnumeration/>
+        <Units/>
+        <Description>Indicates which bindings and modes are supported in the LWM2M Client. The possible values of Resource are combination of "U" or "UQ" and "S" or "SQ".</Description>
+      </Item>
+      <Item ID="5">
+        <Name>Factory Reset</Name>
+        <Operations>E</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <MandatoryBoolean>false</MandatoryBoolean>
+        <Type>String</Type>
+        <RangeEnumeration/>
+        <Units/>
+        <Description>Perform factory reset of the LWM2M Device to make the LWM2M Device have the same configuration as at the initial deployment.
+When this Resource is executed, “De-register” operation  MAY be sent to the LWM2M Server(s) before factory reset of the LWM2M Device.</Description>
+      </Item>
+      <Item ID="14">
+        <Name>UTC Offset</Name>
+        <Operations>RW</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <MandatoryBoolean>false</MandatoryBoolean>
+        <Type>String</Type>
+        <RangeEnumeration/>
+        <Units/>
+        <Description>Indicates the UTC offset currently in effect for this LWM2M Device. UTC+X [ISO 8601].</Description>
+      </Item>
+      <Item ID="2">
+        <Name>Serial Number</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <MandatoryBoolean>false</MandatoryBoolean>
+        <Type>String</Type>
+        <RangeEnumeration/>
+        <Units/>
+        <Description>Serial Number</Description>
+      </Item>
+      <Item ID="1">
+        <Name>Model Number</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <MandatoryBoolean>false</MandatoryBoolean>
+        <Type>String</Type>
+        <RangeEnumeration/>
+        <Units/>
+        <Description>A model identifier (manufacturer specified string)</Description>
+      </Item>
+      <Item ID="12">
+        <Name>Reset Error Code</Name>
+        <Operations>E</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <MandatoryBoolean>false</MandatoryBoolean>
+        <Type>String</Type>
+        <RangeEnumeration/>
+        <Units/>
+        <Description>Delete all error code Resource Instances and create only one zero-value error code that implies no error.</Description>
+      </Item>
+      <Item ID="7">
+        <Name>Power Source Voltage</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Multiple</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <MandatoryBoolean>false</MandatoryBoolean>
+        <Type>Integer</Type>
+        <RangeEnumeration/>
+        <Units>mV</Units>
+        <Description>Present voltage for each Available Power Sources Resource Instance.
+Each Resource Instance ID MUST map to the value of Available Power Sources Resource.</Description>
+      </Item>
+      <Item ID="9">
+        <Name>Battery Level</Name>
+        <Operations>R</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <MandatoryBoolean>false</MandatoryBoolean>
+        <Type>Integer</Type>
+        <RangeEnumeration>0-100</RangeEnumeration>
+        <Units>%</Units>
+        <Description>Contains the current battery level as a percentage (with a range from 0 to 100). This value is only valid when the value of Available Power Sources Resource is 1.</Description>
+      </Item>
+      <Item ID="13">
+        <Name>Current Time</Name>
+        <Operations>RW</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <MandatoryBoolean>false</MandatoryBoolean>
+        <Type>Time</Type>
+        <RangeEnumeration/>
+        <Units/>
+        <Description>Current UNIX time of the LWM2M Client.
+The LWM2M Client should be responsible to increase this time value as every second elapses.
+The LWM2M Server is able to write this Resource to make the LWM2M Client synchronized with the LWM2M Server.</Description>
+      </Item>
+      <Item ID="15">
+        <Name>Timezone</Name>
+        <Operations>RW</Operations>
+        <MultipleInstances>Single</MultipleInstances>
+        <Mandatory>Optional</Mandatory>
+        <MandatoryBoolean>false</MandatoryBoolean>
+        <Type>String</Type>
+        <RangeEnumeration/>
+        <Units/>
+        <Description>Indicates in which time zone the LWM2M Device is located, in IANA Timezone (TZ) database format.</Description>
+      </Item>
+    </Resources>
+    <Description2/>
+  </Object>
+</LWM2M>

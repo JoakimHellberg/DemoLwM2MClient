@@ -37,7 +37,8 @@ public class MyAddressableTextDisplay extends BaseInstanceEnabler {
     	logger.finest("Write on Text Resource " + resourceid + " value: " + value.getValue().toString());
     	 switch (resourceid) {
          	case RESOURCE_ID_TEXT:
-        		this.text = value.getValue().toString();        		
+        		this.text = value.getValue().toString();     
+        		System.out.println(text);
         		fireResourcesChange(RESOURCE_ID_TEXT);
         		return WriteResponse.success();
          	default:

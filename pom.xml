@@ -18,7 +18,7 @@
 		<dependency>
 			<groupId>org.eclipse.leshan</groupId>
 			<artifactId>leshan-client-cf</artifactId>
-			<version>1.0.0-M1</version>
+			<version>1.0.0-M3</version>
 		</dependency>
 
 		<dependency>
@@ -59,7 +59,7 @@
 	</dependencies>
 	<repositories>
 		<repository>
-			<id>appiot-repo</id>
+			<id>snapshots</id>
 			<name>AppIoT Nexus Server</name>
 			<url>http://sensation-repo.cloudapp.net:8081/nexus/content/repositories/releases</url>
 		</repository>
@@ -77,6 +77,14 @@
 
 	<build>
 		<plugins>
+		<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.0</version>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>

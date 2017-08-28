@@ -2,6 +2,7 @@ package com.ericsson.appiot.demo.lwm2m;
 
 import static org.eclipse.leshan.client.object.Security.noSecBootstap;
 
+import java.io.File;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -15,6 +16,8 @@ import org.eclipse.leshan.client.resource.LwM2mObjectEnabler;
 import org.eclipse.leshan.client.resource.ObjectsInitializer;
 import org.eclipse.leshan.client.servers.DmServerInfo;
 import org.eclipse.leshan.client.servers.ServerInfo;
+import org.eclipse.leshan.core.model.LwM2mModel;
+import org.eclipse.leshan.core.model.ObjectLoader;
 import org.eclipse.leshan.core.request.BindingMode;
 
 import com.appiot.examples.simulated.platform.SimulatedPlatformListener;
@@ -44,7 +47,8 @@ public class App {
 	 * This is the bootstrap server uri for registering the device. Replace this
 	 * value with the url for your bootstrap server.
 	 */
-	private static final String SERVER_URI = "coap://40.69.67.129:5673";
+	//private static final String SERVER_URI = "coap://40.69.67.129:5673";
+	private static final String SERVER_URI = "coap://lwm2mdemobs.cloudapp.net:5683";
 	
 	
 	/** SMART OBJECT ID'S */
@@ -79,7 +83,8 @@ public class App {
 		MyAddressableTextDisplay addressableTextDisplay = new MyAddressableTextDisplay();
 		
 		// Setup Objects Initializer 
-		ObjectsInitializer initializer = new ObjectsInitializer();
+		LwM2mModel model = new LwM2mModel(ObjectLoader.load(new File("models/")));
+		ObjectsInitializer initializer = new ObjectsInitializer(model);
 		initializer.setInstancesForObject(SECURITY_ID, noSecBootstap(serverUri));
 		initializer.setInstancesForObject(DEVICE_ID, device);		
 		initializer.setInstancesForObject(FIRMWARE_UPDATE_ID, firmwareUpdate);
@@ -92,7 +97,7 @@ public class App {
 				SERVER_ID, 
 				DEVICE_ID, 
 				FIRMWARE_UPDATE_ID,
-				LOCATION_ID, 
+				LOCATION_ID,
 				TEMPERATURE_ID, 
 				ADDRESSABLE_TEXT_DISPLAY_ID
 		);
