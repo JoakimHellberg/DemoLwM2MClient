@@ -18,6 +18,7 @@ import org.eclipse.leshan.client.servers.DmServerInfo;
 import org.eclipse.leshan.client.servers.ServerInfo;
 import org.eclipse.leshan.core.model.LwM2mModel;
 import org.eclipse.leshan.core.model.ObjectLoader;
+import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.request.BindingMode;
 
 import com.appiot.examples.simulated.platform.SimulatedPlatformListener;
@@ -48,8 +49,11 @@ public class App {
 	 * value with the url for your bootstrap server.
 	 */
 	//private static final String SERVER_URI = "coap://40.69.67.129:5673";
-	private static final String SERVER_URI = "coap://lwm2mdemobs.cloudapp.net:5683";
+	//private static final String SERVER_URI = "coap://lwm2mdemobs.cloudapp.net:5683";
+	private static final String SERVER_URI = "coap://127.0.0.1:5683";
 	
+	
+	private final static String[] modelPaths = new String[] { "3303.xml", "3341.xml" };
 	
 	/** SMART OBJECT ID'S */
 	private static final int SECURITY_ID = 0;
@@ -83,7 +87,10 @@ public class App {
 		MyAddressableTextDisplay addressableTextDisplay = new MyAddressableTextDisplay();
 		
 		// Setup Objects Initializer 
-		LwM2mModel model = new LwM2mModel(ObjectLoader.load(new File("models/")));
+        List<ObjectModel> models = ObjectLoader.loadDefault();
+        models.addAll(ObjectLoader.loadDdfResources("/models", modelPaths));
+        
+		LwM2mModel model = new LwM2mModel(models);
 		ObjectsInitializer initializer = new ObjectsInitializer(model);
 		initializer.setInstancesForObject(SECURITY_ID, noSecBootstap(serverUri));
 		initializer.setInstancesForObject(DEVICE_ID, device);		
